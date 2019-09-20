@@ -108,7 +108,6 @@ VaveZ=nanmean(VZ1(1:9,:),1);
 UaveN=nanmean(UN1(1:9,:),1);
 VaveN=nanmean(VN1(1:9,:),1);
 
-
 %%
 figure;
 scatter(UaveZ,VaveZ,'filled','MarkerEdgeColor',[0 0 0])
@@ -204,6 +203,24 @@ tuN = (1:numel(UN2))*dt*60;
 UN2(UN_nan)=interp1(tuN(~UN_nan),UN2(~UN_nan),tuN(UN_nan)); 
 
 %%
+dstep3 = (50*60)/10;   % 75 uur averaging interval, waarbij 10 de interval van de metingen is
+F3 = fspecial('average',[dstep3]);    % averaging filter
+%%
+nanuN = nanconv(UN2, F3, 'edge','nanout');  % bepalen residual
+UN2 = UN2-0.9*nanuN;  % aftrekken van tijdserie
+nanuZ = nanconv(UZ2, F3, 'edge','nanout');  % bepalen residual
+UZ2 = UZ2-0.3*nanuZ;  % aftrekken van tijdserie
+nanvN = nanconv(VN2, F3, 'edge','nanout');  % bepalen residual
+VN2 = VN2-nanvN;  % aftrekken van tijdserie
+nanvZ = nanconv(VZ2, F3, 'edge','nanout');  % bepalen residual
+VZ2 = VZ2-nanvZ;  % aftrekken van tijdserie
+
+%%
+figure;
+plot(UZ2)
+hold on
+plot(UZ2)
+%%
 Daystart = datetime(2017,12,02,09,40,00);
 Dayend = datetime(2018,02,02,20,10,00);
 Timedays = Daystart:(10/1440):Dayend;
@@ -268,13 +285,14 @@ bct_basis = bct_io('read',[dir,file]);
 Tstart = 2020;
 T100 = 5.2603E4;
 T50 = 1.0521E5;
+T60 = 8.7690E4;
 T25 = 2.1044E5;
 Tspin = 3000;
 T50_40yr = 4.2087E5;
 
 Tall = length(time)*10+Tstart-1;
-Tstop = Tstart+Tspin+T50;
-Time=Tstart:10:Tall;
+Tstop = Tstart+Tspin+T25;
+Time=Tstart:10:Tstop;
 
 %%
 Rz2=[Rz(1:end-40); Rz(1:end-40); Rz(1:end-40); Rz(1:end-40); Rz];
@@ -286,7 +304,7 @@ Zn2=[Zn(1:end-60); Zn(1:end-60); Zn(1:end-60); Zn(1:end-60); Zn];
 
 %%
 figure;
-plot(Un2(length(Zn)/2-100:length(Zn)/2+100))
+plot(Rz(length(Zn)/2-500:length(Rz)/2+500))
 
 %%
 bct_final = bct_basis;
@@ -303,22 +321,28 @@ Unfin=Un2(1:length(Time));
 Znfin=Zn2(1:length(Time));
 Zzfin=Zz2(1:length(Time));
 
+figure;
+plot(Rzfin)
+
 nanmean(Rzfin)
 nanmean(Rnfin)
 nanmean(Znfin)
 nanmean(Uz2)
 nanmean(Un2)
 
-% save('bc_all.mat','Uzfin','Unfin','Zzfin','Znfin','Time')
+save('bc_all.mat','Uzfin','Unfin','Zzfin','Znfin','Time')
 %% 
 
-bct_io('write','RR_all_2.bct',bct_final);
+bct_io('write','RR_MF25_2.bct',bct_final);
 %%
 dt = Time/24/60-Time(1)/24/60-2.08;
 
 %%
 figure;
 plot(Rzfin)
+
+figure;
+plot(Rnfin)
 %%
 fig = figure;
 left_color = [0 0 1];
